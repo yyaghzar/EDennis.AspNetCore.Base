@@ -18,10 +18,7 @@ using System.Net.Sockets;
 
 namespace EDennis.AspNetCore.Base.Testing {
 
-    public class ApiLauncher<TStartup> : IDisposable
-        where TStartup : class {
-
-        private static readonly object _lockobj = new object();
+    public class ApiLauncher : IDisposable {
 
 
         public ApiLauncher(IConfiguration config, ILogger logger, ProjectPorts projectPorts) {
@@ -42,10 +39,18 @@ namespace EDennis.AspNetCore.Base.Testing {
         private ILogger _logger { get; }
         private ProjectPorts _projectPorts { get; }
 
-        public async Task StartAsync() {
+
+        public async Task StartAsync<TStartup>()
+            where TStartup : class {
+            await StartAsync<TStartup, TStartup>();
+        }
+
+        public async Task StartAsync<TStartup,TProgram>()
+            where TStartup : class
+            where TProgram : class {
 
 
-            _projectName = Assembly.GetAssembly(typeof(TStartup)).FullName;
+            _projectName = Assembly.GetAssembly(typeof(TProgram)).FullName;
             _projectName = _projectName.Substring(0, _projectName.IndexOf(',')).TrimEnd();
 
             var apiEntry = _apis.Where(x => x.Value.ProjectName == _projectName).FirstOrDefault();

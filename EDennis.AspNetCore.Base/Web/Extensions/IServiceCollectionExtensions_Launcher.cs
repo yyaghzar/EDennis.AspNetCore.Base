@@ -18,11 +18,20 @@ namespace EDennis.AspNetCore.Base.Web {
         public IConfiguration Configuration { get; set; }
         public ProjectPorts ProjectPorts { get; set; }
 
+        public ApiLauncherService AddLauncher<TStartup, TProgram>()
+            where TStartup : class
+            where TProgram : class {
+            var launcher = new ApiLauncher(Configuration, Logger, ProjectPorts);
+            Services.AddSingleton(launcher);
+            launcher.StartAsync<TStartup,TProgram>().Wait();
+            return this;
+        }
+
         public ApiLauncherService AddLauncher<TStartup>()
             where TStartup : class {
-            var launcher = new ApiLauncher<TStartup>(Configuration, Logger, ProjectPorts);
+            var launcher = new ApiLauncher(Configuration, Logger, ProjectPorts);
             Services.AddSingleton(launcher);
-            launcher.StartAsync().Wait();
+            launcher.StartAsync<TStartup>().Wait();
             return this;
         }
 
@@ -74,6 +83,36 @@ namespace EDennis.AspNetCore.Base.Web {
 
             return launcherService.AddLauncher<TStartup>();
         }
+
+
+        public static ApiLauncherService AddLauncher<TStartup,TProgram>(this IServiceCollection services,
+            IConfiguration config, ILogger logger)
+            where TStartup : class
+            where TProgram : class{
+
+            //generate a new ProjectPorts object, if it doesn't exist
+            //use EventWaitHandle to prevent multiple threads/processes
+            //from trying to simultaneously create the singleton.
+            EventWaitHandle ewh = new EventWaitHandle(
+                true, EventResetMode.AutoReset, ProjectPorts.WAIT_HANDLE_NAME);
+            ewh.WaitOne();
+            var provider = services.BuildServiceProvider();
+            if (!(provider.GetService(typeof(ProjectPorts)) is ProjectPorts projectPorts)) {
+                projectPorts = new ProjectPorts(config);
+            }
+            ewh.Set();
+
+            var launcherService = new ApiLauncherService {
+                Services = services,
+                Configuration = config,
+                Logger = logger,
+                ProjectPorts = projectPorts
+            };
+
+            return launcherService.AddLauncher<TStartup,TProgram>();
+        }
+
+
     }
 }
 
