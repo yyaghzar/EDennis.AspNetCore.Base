@@ -22,7 +22,7 @@ namespace EDennis.AspNetCore.Base.Testing {
             where T : class {
 
 
-            var context = TestDbContextManager<TContext>.GetReadonlyDatabase(
+            var context = TestDbContextCache<TContext>.GetReadonlyDatabase(
                 factory.Configuration);
 
             var repo = Activator.CreateInstance(typeof(TRepo),
@@ -42,10 +42,10 @@ namespace EDennis.AspNetCore.Base.Testing {
             where T : class {
 
 
-            var context = TestDbContextManager<TContext>.GetReadonlyDatabase(
+            var context = TestDbContextCache<TContext>.GetReadonlyDatabase(
                 factory.Configuration);
 
-            var historyContext = TestDbContextManager<THistoryContext>.GetReadonlyDatabase(
+            var historyContext = TestDbContextCache<THistoryContext>.GetReadonlyDatabase(
                 factory.Configuration);
 
             var repo = Activator.CreateInstance(typeof(TRepo),
@@ -66,11 +66,10 @@ namespace EDennis.AspNetCore.Base.Testing {
             where TRepo : WriteableRepo<TEntity, TContext>
             where T : class {
 
-            var databaseName = factory.Configuration.GetDatabaseName<TContext>();
             var instanceName = Guid.NewGuid().ToString();
 
-            var context = TestDbContextManager<TContext>.CreateInMemoryDatabase(
-                databaseName, instanceName);
+            var cache = new TestDbContextCache<TContext>();
+            var context = cache.CreateInMemoryDatabase(instanceName);
 
             var scopeProperties = new ScopeProperties {
                 User = testUser
@@ -106,11 +105,11 @@ namespace EDennis.AspNetCore.Base.Testing {
             var historyInstanceName = instanceName + Interceptor.HISTORY_INSTANCE_SUFFIX;
 
 
-            var context = TestDbContextManager<TContext>.CreateInMemoryDatabase(
-                databaseName, instanceName);
+            var cache = new TestDbContextCache<TContext>();
+            var context = cache.CreateInMemoryDatabase(instanceName);
 
-            var historyContext = TestDbContextManager<THistoryContext>.CreateInMemoryDatabase(
-                historyDatabaseName, historyInstanceName);
+            var historyCache = new TestDbContextCache<THistoryContext>();
+            var historyContext = historyCache.CreateInMemoryDatabase(historyInstanceName);
 
             var scopeProperties = new ScopeProperties {
                 User = testUser

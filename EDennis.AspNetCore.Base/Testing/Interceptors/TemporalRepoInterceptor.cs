@@ -55,14 +55,14 @@ namespace EDennis.AspNetCore.Base.Testing {
                 var historyCache = provider.GetRequiredService(typeof(TestDbContextCache<THistoryContext>))
                         as TestDbContextCache<THistoryContext>;
 
-                var baseDatabaseName = TestDbContextManager<TContext>.BaseDatabaseName(config);
-                var histDatabaseName = TestDbContextManager<THistoryContext>.BaseDatabaseName(config);
+                //var baseDatabaseName = TestDbContextManager<TContext>.BaseDatabaseName(config);
+                //var histDatabaseName = TestDbContextManager<THistoryContext>.BaseDatabaseName(config);
 
                 if (operation == HDR_USE_READONLY)
                     throw new ApplicationException("HDR_USE_READONLY not appropriate for Writeable Repo.");
                 else if (operation == HDR_USE_INMEMORY) {
-                    GetOrAddInMemoryDatabase(repo, cache, baseInstanceName, baseDatabaseName);
-                    GetOrAddInMemoryHistoryDatabase(repo, historyCache, histInstanceName, histDatabaseName);
+                    GetOrAddInMemoryDatabase(repo, cache, baseInstanceName);
+                    GetOrAddInMemoryHistoryDatabase(repo, historyCache, histInstanceName);
                 } else if (operation == HDR_DROP_INMEMORY) {
                     DropInMemory(cache, baseInstanceName);
                     DropInMemoryHistory(historyCache, histInstanceName);
@@ -74,14 +74,13 @@ namespace EDennis.AspNetCore.Base.Testing {
         }
 
         private void GetOrAddInMemoryDatabase(TRepo repo,
-            TestDbContextCache<TContext> cache,
-            string instanceName, string baseDatabaseName) {
+            TestDbContextCache<TContext> cache, string instanceName) {
             if (cache.ContainsKey(instanceName)) {
-                _logger.LogInformation($"Using existing in-memory database {baseDatabaseName}, instance = {instanceName}");
+                _logger.LogInformation($"Using existing in-memory database instance = {instanceName} for {typeof(TContext).Name}");
                 repo.Context = cache[instanceName];
             } else {
-                _logger.LogInformation($"Creating in-memory database {baseDatabaseName}, instance = {instanceName}");
-                var dbContext = TestDbContextManager<TContext>.CreateInMemoryDatabase(baseDatabaseName, instanceName);
+                _logger.LogInformation($"Creating in-memory database instance = {instanceName} for {typeof(TContext).Name}");
+                var dbContext = cache.CreateInMemoryDatabase(instanceName);
                 repo.Context = dbContext;
                 repo.Context.Database.EnsureCreated();
                 cache.Add(instanceName, repo.Context);
@@ -91,14 +90,13 @@ namespace EDennis.AspNetCore.Base.Testing {
 
 
         private void GetOrAddInMemoryHistoryDatabase(TRepo repo,
-            TestDbContextCache<THistoryContext> cache,
-            string instanceName, string baseDatabaseName) {
+            TestDbContextCache<THistoryContext> cache, string instanceName) {
             if (cache.ContainsKey(instanceName)) {
-                _logger.LogInformation($"Using existing in-memory history database {baseDatabaseName}, instance = {instanceName}");
+                _logger.LogInformation($"Using existing in-memory history database, instance = {instanceName} for {typeof(THistoryContext).Name}");
                 repo.HistoryContext = cache[instanceName];
             } else {
-                _logger.LogInformation($"Creating in-memory history database {baseDatabaseName}, instance = {instanceName}");
-                var dbContext = TestDbContextManager<THistoryContext>.CreateInMemoryDatabase(baseDatabaseName, instanceName);
+                _logger.LogInformation($"Creating in-memory history database, instance = {instanceName} for {typeof(THistoryContext).Name}");
+                var dbContext = cache.CreateInMemoryDatabase(instanceName);
                 repo.HistoryContext = dbContext;
                 repo.HistoryContext.Database.EnsureCreated();
                 cache.Add(instanceName, repo.HistoryContext);
@@ -111,7 +109,7 @@ namespace EDennis.AspNetCore.Base.Testing {
             if (cache.ContainsKey(instanceName)) {
                 _logger.LogInformation($"Dropping in-memory history instance {instanceName} for {typeof(TContext).Name}");
                 var context = cache[instanceName];
-                TestDbContextManager<TContext>.DropInMemoryDatabase(context);
+                TestDbContextCache<TContext>.DropInMemoryDatabase(context);
                 cache.Remove(instanceName);
             }
         }
@@ -123,7 +121,7 @@ namespace EDennis.AspNetCore.Base.Testing {
             if (cache.ContainsKey(instanceName)) {
                 _logger.LogInformation($"Dropping in-memory history database instance {instanceName} for {typeof(THistoryContext).Name}");
                 var context = cache[instanceName];
-                TestDbContextManager<THistoryContext>.DropInMemoryDatabase(context);
+                TestDbContextCache<THistoryContext>.DropInMemoryDatabase(context);
                 cache.Remove(instanceName);
             }
 

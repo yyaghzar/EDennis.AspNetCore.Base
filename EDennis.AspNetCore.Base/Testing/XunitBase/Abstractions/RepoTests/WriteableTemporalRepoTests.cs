@@ -36,8 +36,8 @@ namespace EDennis.AspNetCore.Base.Testing {
         protected virtual void Dispose(bool disposing) {
             if (!disposedValue) {
                 if (disposing) {
-                    TestDbContextManager<TContext>.DropInMemoryDatabase(Repo.Context);
-                    TestDbContextManager<THistoryContext>.DropInMemoryDatabase(Repo.HistoryContext);
+                    TestDbContextCache<TContext>.DropInMemoryDatabase(Repo.Context);
+                    TestDbContextCache<THistoryContext>.DropInMemoryDatabase(Repo.HistoryContext);
                 }
                 disposedValue = true;
             }
