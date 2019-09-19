@@ -186,7 +186,6 @@ namespace EDennis.AspNetCore.Base.Web {
         {
             var msg = request.ToHttpRequestMessage(client);
             var url = relativeUrlFromBase + (msg.Properties["QueryString"] ?? "");
-            //url = WebUtility.UrlDecode(url);
             return ForwardRequest<T>(client, msg, url);
         }
 
@@ -195,7 +194,6 @@ namespace EDennis.AspNetCore.Base.Web {
         {
             var msg = request.ToHttpRequestMessage(client, body);
             var url = relativeUrlFromBase + (msg.Properties["QueryString"] ?? "");
-            //url = WebUtility.UrlDecode(url);
             return ForwardRequest<T>(client, msg, url);
         }
 
