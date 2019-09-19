@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -13,6 +14,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.Serialization;
 
 namespace EDennis.AspNetCore.Base.Web {
 
@@ -184,7 +186,7 @@ namespace EDennis.AspNetCore.Base.Web {
         {
             var msg = request.ToHttpRequestMessage(client);
             var url = relativeUrlFromBase + (msg.Properties["QueryString"] ?? "");
-            url = WebUtility.UrlDecode(url);
+            //url = WebUtility.UrlDecode(url);
             return ForwardRequest<T>(client, msg, url);
         }
 
@@ -193,7 +195,7 @@ namespace EDennis.AspNetCore.Base.Web {
         {
             var msg = request.ToHttpRequestMessage(client, body);
             var url = relativeUrlFromBase + (msg.Properties["QueryString"] ?? "");
-            url = WebUtility.UrlDecode(url);
+            //url = WebUtility.UrlDecode(url);
             return ForwardRequest<T>(client, msg, url);
         }
 
@@ -279,23 +281,13 @@ namespace EDennis.AspNetCore.Base.Web {
         private static ObjectResult ForwardRequest<T>(this HttpClient client, HttpRequestMessage msg, string relativeUrlFromBase)
         {
 
-            string[] uri = relativeUrlFromBase.Split('?');
-
             var url = new Url(client.BaseAddress)
-                .AppendPathSegment(uri[0]);
+                .AppendPathSegment(relativeUrlFromBase);
 
-            if (uri.Length > 1)
-            {
-                string[] qsegs = uri[1].Split('&');
-                foreach (var qseg in qsegs)
-                {
-                    string[] q = qseg.Split('=');
-                    url.SetQueryParam(q[0], q[1]);
-                }
-            }
+            url = WebUtility.UrlDecode(url);
 
-            msg.RequestUri = url.ToUri();
-
+           var uri = url.ToUri();
+            msg.RequestUri = uri; //uri;
             var response = client.SendAsync(msg).Result;
             var objResult = GenerateObjectResult<T>(response).Result;
 
@@ -305,6 +297,7 @@ namespace EDennis.AspNetCore.Base.Web {
 
         }
 
+        
 
 
         private static HttpRequestMessage ToHttpRequestMessage(this HttpRequest httpRequest, HttpClient client)
@@ -448,6 +441,9 @@ namespace EDennis.AspNetCore.Base.Web {
             return msg;
         }
 
+
+
+        
 
 
     }
