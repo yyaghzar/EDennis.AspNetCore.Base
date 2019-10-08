@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Internal;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -14,37 +13,37 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.Serialization;
 
 namespace EDennis.AspNetCore.Base.Web {
 
     public static class HttpClientExtensions {
 
-        public static ObjectResult Get<T>(this HttpClient client, string relativeUrlFromBase)
+        public static ObjectResult Get<TResponseObject>(this HttpClient client, string relativeUrlFromBase)
         {
-            return client.GetAsync<T>(relativeUrlFromBase).Result;
+            return client.GetAsync<TResponseObject>(relativeUrlFromBase).Result;
         }
 
-        public static async Task<ObjectResult> GetAsync<T>(
+        public static async Task<ObjectResult> GetAsync<TResponseObject>(
                 this HttpClient client, string relativeUrlFromBase)
         {
 
 
             var url = Url.Combine(client.BaseAddress.ToString(), relativeUrlFromBase);
             var response = await client.GetAsync(url);
-            var objResult = await GenerateObjectResult<T>(response);
+            var objResult = await GenerateObjectResult<TResponseObject>(response);
 
             return objResult;
 
         }
 
-        public static ObjectResult Get<T>(this HttpClient client, string relativeUrlFromBase, T obj) {
-            return client.GetAsync<T>(relativeUrlFromBase, obj).Result;
+        public static ObjectResult Get<TRequestObject, TResponseObject>(this HttpClient client, string relativeUrlFromBase, TRequestObject obj) {
+            return client.GetAsync<TRequestObject, TResponseObject>(relativeUrlFromBase, obj).Result;
         }
 
-        public static async Task<ObjectResult> GetAsync<T>(
-                this HttpClient client, string relativeUrlFromBase, T obj) {
 
+
+        public static async Task<ObjectResult> GetAsync<TRequestObject, TResponseObject>(
+                this HttpClient client, string relativeUrlFromBase, TRequestObject obj) {
 
             var url = Url.Combine(client.BaseAddress.ToString(), relativeUrlFromBase);
 
@@ -52,17 +51,41 @@ namespace EDennis.AspNetCore.Base.Web {
             var msg = new HttpRequestMessage {
                 Method = HttpMethod.Get,
                 RequestUri = new Uri(url),
-                Content = new BodyContent<T>(obj)
+                Content = new BodyContent<TRequestObject>(obj)
             };
 
             var response = await client.SendAsync(msg);
-            var objResult = await GenerateObjectResult<T>(response);
+            var objResult = await GenerateObjectResult<TResponseObject>(response);
 
             return objResult;
 
         }
 
 
+
+        public static StatusCodeResult GetStatusCodeResult(this HttpClient client, string relativeUrlFromBase) {
+            return client.GetStatusCodeResultAsync(relativeUrlFromBase).Result;
+        }
+
+
+
+        public static async Task<StatusCodeResult> GetStatusCodeResultAsync(
+                this HttpClient client, string relativeUrlFromBase) {
+
+            var url = Url.Combine(client.BaseAddress.ToString(), relativeUrlFromBase);
+
+            //build the request message object for the GET
+            var msg = new HttpRequestMessage {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(url)
+            };
+
+            var response = await client.SendAsync(msg);
+            var statusCode = response.StatusCode;
+
+            return new StatusCodeResult((int)statusCode);
+
+        }
 
 
         public static ObjectResult Post<T>(this HttpClient client, string relativeUrlFromBase, T obj)
@@ -276,26 +299,22 @@ namespace EDennis.AspNetCore.Base.Web {
 
 
 
-        private static ObjectResult ForwardRequest<T>(this HttpClient client, HttpRequestMessage msg, string relativeUrlFromBase)
-        {
+        private static ObjectResult ForwardRequest<T>(this HttpClient client, HttpRequestMessage msg, string relativeUrlFromBase) {
 
             var url = new Url(client.BaseAddress)
-                .AppendPathSegment(relativeUrlFromBase);
+                 .AppendPathSegment(relativeUrlFromBase);
 
             url = WebUtility.UrlDecode(url);
 
-           var uri = url.ToUri();
-            msg.RequestUri = uri; //uri;
+            var uri = url.ToUri();
+            msg.RequestUri = uri;
             var response = client.SendAsync(msg).Result;
             var objResult = GenerateObjectResult<T>(response).Result;
 
             return objResult;
 
-
-
         }
 
-        
 
 
         private static HttpRequestMessage ToHttpRequestMessage(this HttpRequest httpRequest, HttpClient client)
@@ -374,7 +393,6 @@ namespace EDennis.AspNetCore.Base.Web {
         {
             if (req.Cookies != null && req.Cookies.Count > 0)
             {
-                var cookieContainer = new CookieContainer();
                 var sb = new StringBuilder();
                 foreach (var cookie in req.Cookies)
                 {
@@ -439,9 +457,6 @@ namespace EDennis.AspNetCore.Base.Web {
             return msg;
         }
 
-
-
-        
 
 
     }

@@ -11,13 +11,16 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using EDennis.AspNetCore.Base.Web.Security;
 using IdentityModel;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace IdentityServer {
     public class Startup {
@@ -32,10 +35,13 @@ namespace IdentityServer {
 
         public void ConfigureServices(IServiceCollection services) {
 
+
             var builder = services.AddIdentityServer()
                 .AddInMemoryIdentityResources(Config.GetIdentityResources())
                 .AddInMemoryApiResources(Config.GetApis())
-                .AddInMemoryClients(Config.GetClients());
+                .AddInMemoryClients(Config.GetClients())
+                .AddTestUsers(Config.GetUsers())
+                .AddProfileService<StaticClaimsProfileService>();
 
             if (Environment.IsDevelopment()) {
                 //var dir = Environment.ContentRootPath;
@@ -45,6 +51,9 @@ namespace IdentityServer {
             } else {
                 throw new Exception("need to configure key material");
             }
+
+            services.AddMvc();
+
 
         }
 
@@ -72,7 +81,12 @@ namespace IdentityServer {
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseStaticFiles();
+
             app.UseIdentityServer();
+
+
+            app.UseMvcWithDefaultRoute();
         }
 
 
