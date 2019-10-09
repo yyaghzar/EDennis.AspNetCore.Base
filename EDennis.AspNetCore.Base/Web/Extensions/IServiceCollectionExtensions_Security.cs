@@ -11,7 +11,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using W = System.Web.Http;
 
 namespace EDennis.AspNetCore.Base.Web {
 
@@ -126,7 +125,7 @@ namespace EDennis.AspNetCore.Base.Web {
             }
 
             //services.AddAuthorizationWithDefaultPolicies(assembly,
-                //settings.ScopePatternOptions, policyNames, env);
+            //    settings.ScopePatternOptions, policyNames, env);
 
         }
 
@@ -155,20 +154,20 @@ namespace EDennis.AspNetCore.Base.Web {
                 env = provider.GetRequiredService<IHostingEnvironment>();
             }
 
-            //services.AddAuthorization(opt => {
+            services.AddAuthorization(opt => {
 
-            //    var applicationName = env.ApplicationName;
-            //    var controllers = GetControllerTypes(assembly);
+                var applicationName = env.ApplicationName;
+                var controllers = GetControllerTypes(assembly);
 
-            //    foreach (var policyName in policyNames) {
-            //        var requirementScope = policyName;
-            //        opt.AddPolicy(policyName, builder => {
-            //            builder.RequireClaimPatternMatch(requirementScope, options);
-            //        });
+                foreach (var policyName in policyNames) {
+                    var requirementScope = policyName;
+                    opt.AddPolicy(policyName, builder => {
+                        builder.RequireClaimPatternMatch(requirementScope, options);
+                    });
 
-            //    }
+                }
 
-            //});
+            });
 
 
         }
@@ -190,8 +189,6 @@ namespace EDennis.AspNetCore.Base.Web {
 
             foreach (var controller in controllers) {
 
-                //if (controller.Name == "AccountController")
-                 //   continue;
                 var controllerPath = applicationName + "." + Regex.Replace(controller.Name, "Controller$", "");
                 var actions = GetActionMethods(controller);
 
@@ -212,13 +209,11 @@ namespace EDennis.AspNetCore.Base.Web {
         /// <returns>all controller types</returns>
         private static IEnumerable<Type> GetControllerTypes(Assembly assembly) {
             var controllerTypes = assembly.GetTypes()
-                .Where(t => (
-                    t.Name.EndsWith("Controller") ||
+                .Where(t =>
                     t.IsSubclassOf(typeof(ControllerBase)) ||
                     t.IsSubclassOf(typeof(Controller)) ||
                     t.GetCustomAttribute<ApiControllerAttribute>() != null ||
                     t.GetCustomAttribute<RouteAttribute>() != null
-                    ) && t.GetCustomAttribute<W.AllowAnonymousAttribute>() == null
                     );
             return controllerTypes;
         }

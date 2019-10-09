@@ -36,7 +36,7 @@ namespace EDennis.AspNetCore.Base.Web.Abstractions {
 
 
         private async Task SetBearerToken(IConfiguration config) {
-            Dictionary<string,ApiConfig> apis = new Dictionary<string,ApiConfig>();
+            Dictionary<string, ApiConfig> apis = new Dictionary<string, ApiConfig>();
 
             config.GetSection("Apis").Bind(apis);
             var clientSecret = config["Security:ClientSecret"];
@@ -47,8 +47,8 @@ namespace EDennis.AspNetCore.Base.Web.Abstractions {
             var targetApiName = this.GetType().Name;
 
             var targetApi = apis[targetApiName];
-                //.Where(x => CleanUrl(x.BaseAddress) == CleanUrl(HttpClient.BaseAddress))
-                //.FirstOrDefault();
+            //.Where(x => CleanUrl(x.BaseAddress) == CleanUrl(HttpClient.BaseAddress))
+            //.FirstOrDefault();
 
             if (targetApi.Scopes == null || targetApi.Scopes.Count() == 0)
                 throw new ApplicationException($"Configuration for {targetApiName} is missing its Scopes (string[]) setting");
@@ -60,8 +60,7 @@ namespace EDennis.AspNetCore.Base.Web.Abstractions {
             _secureTokenCache.TryGetValue(targetApiName, out CachedToken cachedToken);
             if (cachedToken != null && cachedToken.Expiration < DateTime.Now.Subtract(TimeSpan.FromSeconds(10))) {
                 tokenResponse = cachedToken.TokenResponse;
-            }
-            else {
+            } else {
                 //var identityServerApi = apis
                 //    .Where(x => CleanUrl(x.Value.BaseAddress) == CleanUrl(_identityServerApiClient.HttpClient.BaseAddress))
                 //    .FirstOrDefault();
@@ -86,7 +85,7 @@ namespace EDennis.AspNetCore.Base.Web.Abstractions {
         }
 
         private string CleanUrl(string url) {
-            if(url == null)
+            if (url == null)
                 throw new ApplicationException($"You must specify a Base Address for {this.GetType().Name}");
             return Regex.Replace(Regex.Replace(url, "/$", ""), "\\$", "");
         }
@@ -125,4 +124,3 @@ namespace EDennis.AspNetCore.Base.Web.Abstractions {
 
     }
 }
-

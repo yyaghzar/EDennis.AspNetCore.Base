@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
-using System.Web.Http;
 
 namespace EDennis.AspNetCore.Base.Security {
 
@@ -23,11 +22,13 @@ namespace EDennis.AspNetCore.Base.Security {
 
         public void Apply(ControllerModel controller) {
 
-            if(controller.Attributes.Any(f => f.GetType() == typeof(AllowAnonymousAttribute)))
+            //don't add Filter if AllowAnonymousFilter is already added
+            if (controller.Filters.Any(f => f.GetType() == typeof(AllowAnonymousFilter)))
                 return;
+
             var controllerPath = _appName + '.' + controller.ControllerName;
 
-            foreach(var action in controller.Actions) {
+            foreach (var action in controller.Actions) {
                 var actionPath = controllerPath + '.' + action.ActionName;
                 action.Filters.Add(new AuthorizeFilter(actionPath));
                 _config[$"DefaultPolicies:{actionPath}"] = "action";
