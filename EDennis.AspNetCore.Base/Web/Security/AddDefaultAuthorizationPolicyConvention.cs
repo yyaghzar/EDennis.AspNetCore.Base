@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
+using System.Web.Http;
 
 namespace EDennis.AspNetCore.Base.Security {
 
@@ -21,6 +23,8 @@ namespace EDennis.AspNetCore.Base.Security {
 
         public void Apply(ControllerModel controller) {
 
+            if(controller.Attributes.Any(f => f.GetType() == typeof(AllowAnonymousAttribute)))
+                return;
             var controllerPath = _appName + '.' + controller.ControllerName;
 
             foreach(var action in controller.Actions) {
